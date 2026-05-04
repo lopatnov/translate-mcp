@@ -1,0 +1,27 @@
+{
+  "name": "translate-mcp",
+  "version": "1.0.0",
+  "description": "MCP Server for Lopatnov.Translate project",
+  "keywords": [
+    "mcp",
+    "translate"
+  ],
+  "homepage": "https://github.com/lopatnov/translate-mcp#readme",
+  "bugs": {
+    "url": "https://github.com/lopatnov/translate-mcp/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lopatnov/translate-mcp.git"
+  },
+  "license": "Apache-2.0",
+  "author": "lopatnov",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0"
+  }
+}
