@@ -8,32 +8,36 @@ import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 
 // ---------------------------------------------------------------------------
-// gRPC client setup
+// gRPC client — lazy init (created on first tool call, not at startup)
+// This ensures the MCP server starts cleanly even when the gRPC service
+// is not running. No connection attempt, no error notification on launch.
 // ---------------------------------------------------------------------------
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PROTO_PATH = join(__dirname, "../../src/Lopatnov.Translate.Grpc/Protos/translate.proto");
 const GRPC_URL = process.env.TRANSLATE_GRPC_URL ?? "localhost:5100";
 
-const packageDef = protoLoader.loadSync(PROTO_PATH, {
-  keepCase: true,
-  longs: String,
-  enums: String,
-  defaults: true,
-  oneofs: true,
-});
+let _client = null;
 
-const { lopatnov: { translate: { v1: proto } } } = grpc.loadPackageDefinition(packageDef);
+function getClient() {
+  if (_client) return _client;
 
-const client = new proto.TranslateService(
-  GRPC_URL,
-  grpc.credentials.createInsecure(),
-);
+  const packageDef = protoLoader.loadSync(PROTO_PATH, {
+    keepCase: true,
+    longs: String,
+    enums: String,
+    defaults: true,
+    oneofs: true,
+  });
+  const { lopatnov: { translate: { v1: proto } } } = grpc.loadPackageDefinition(packageDef);
+  _client = new proto.TranslateService(GRPC_URL, grpc.credentials.createInsecure());
+  return _client;
+}
 
 /** Promisify a unary gRPC call */
 function call(method, request) {
   return new Promise((resolve, reject) =>
-    client[method](request, (err, response) =>
+    getClient()[method](request, (err, response) =>
       err ? reject(err) : resolve(response),
     ),
   );
