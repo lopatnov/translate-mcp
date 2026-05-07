@@ -1,6 +1,6 @@
 {
-  "name": "translate-mcp",
-  "version": "1.0.0",
+  "name": "@lopatnov/translate-mcp",
+  "version": "2.0.0",
   "description": "MCP Server for Lopatnov.Translate project",
   "keywords": [
     "mcp",
