@@ -5,7 +5,7 @@ import grpc from "@grpc/grpc-js";
 import protoLoader from "@grpc/proto-loader";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { z } from "zod";
 
 // ---------------------------------------------------------------------------
@@ -147,7 +147,11 @@ server.registerTool("transcribe_audio", {
   },
 }, async (args) => {
   try {
-    const audioBytes = readFileSync(args.file_path);
+    const resolvedPath = resolve(args.file_path);
+    if (!resolvedPath.toLowerCase().endsWith(".wav")) {
+      return { content: [{ type: "text", text: "❌ Only .wav files are supported" }], isError: true };
+    }
+    const audioBytes = readFileSync(resolvedPath);
     const res = await call("TranscribeAudio", {
       audio_data:      audioBytes,
       language:        args.language ?? "auto",
