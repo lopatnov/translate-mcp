@@ -15,7 +15,7 @@ import { dirname, join } from "path";
 // ---------------------------------------------------------------------------
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const PROTO_PATH = join(__dirname, "../../src/Lopatnov.Translate.Grpc/Protos/translate.proto");
+const PROTO_PATH = join(__dirname, "protos/translate.proto");
 const GRPC_URL = process.env.TRANSLATE_GRPC_URL ?? "localhost:5100";
 
 let _client = null;

@@ -47,7 +47,7 @@ npm install -g @lopatnov/translate-mcp
 Or run without installing:
 
 ```bash
-npx @lopatnov/translate-mcp
+npx -y @lopatnov/translate-mcp
 ```
 
 ## AI Client Configuration
