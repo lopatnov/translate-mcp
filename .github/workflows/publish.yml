@@ -33,7 +33,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       - name: Configure git
         run: |
@@ -86,7 +86,13 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts
+
+      - name: Verify NPM_TOKEN
+        run: |
+          test -n "$NPM_TOKEN" || { echo "::error::NPM_TOKEN secret is not configured"; exit 1; }
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish
         run: npm publish --provenance --access=public
@@ -116,7 +122,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       - name: Publish to GitHub Packages
         run: npm publish --access=public
