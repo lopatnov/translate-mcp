@@ -5,7 +5,8 @@ import grpc from "@grpc/grpc-js";
 import protoLoader from "@grpc/proto-loader";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { dirname, join, resolve } from "node:path";
+import { dirname, join, resolve, sep } from "node:path";
+import { homedir } from "node:os";
 import { z } from "zod";
 
 // ---------------------------------------------------------------------------
@@ -17,6 +18,7 @@ import { z } from "zod";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PROTO_PATH = join(__dirname, "protos/translate.proto");
 const GRPC_URL = process.env.TRANSLATE_GRPC_URL ?? "localhost:5100";
+const AUDIO_BASE_DIR = resolve(process.env.TRANSCRIBE_BASE_DIR ?? homedir());
 
 let _client = null;
 
@@ -148,6 +150,9 @@ server.registerTool("transcribe_audio", {
 }, async (args) => {
   try {
     const resolvedPath = resolve(args.file_path);
+    if (!resolvedPath.startsWith(AUDIO_BASE_DIR + sep)) {
+      return { content: [{ type: "text", text: `❌ File must be inside ${AUDIO_BASE_DIR}` }], isError: true };
+    }
     if (!resolvedPath.toLowerCase().endsWith(".wav")) {
       return { content: [{ type: "text", text: "❌ Only .wav files are supported" }], isError: true };
     }
