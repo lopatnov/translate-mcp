@@ -9,16 +9,17 @@ on:
         default: 'patch'
         type: choice
         options: [patch, minor, major]
+  push:
+    tags: ['v*']
 
 jobs:
   release:
     name: Bump version & create release branch
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       contents: write
       pull-requests: write
-    outputs:
-      version: ${{ steps.bump.outputs.version }}
 
     steps:
       - name: Checkout
@@ -65,7 +66,7 @@ jobs:
 
   publish-npm:
     name: Publish to npmjs.org
-    needs: release
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -75,7 +76,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          ref: ${{ needs.release.outputs.version }}
+          ref: ${{ github.ref_name }}
           persist-credentials: false
 
       - name: Set up Node.js
@@ -101,7 +102,7 @@ jobs:
 
   publish-github:
     name: Publish to GitHub Packages & create release
-    needs: release
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     permissions:
       contents: write   # required for gh release create
@@ -111,7 +112,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          ref: ${{ needs.release.outputs.version }}
+          ref: ${{ github.ref_name }}
           persist-credentials: false
 
       - name: Set up Node.js
@@ -130,6 +131,6 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create GitHub Release
-        run: gh release create ${{ needs.release.outputs.version }} --generate-notes --latest
+        run: gh release create "${{ github.ref_name }}" --generate-notes --latest
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
