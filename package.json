@@ -19,14 +19,13 @@
     "self-hosted",
     "offline"
   ],
-  "homepage": "https://github.com/lopatnov/translate#readme",
+  "homepage": "https://github.com/lopatnov/translate-mcp#readme",
   "bugs": {
-    "url": "https://github.com/lopatnov/translate/issues"
+    "url": "https://github.com/lopatnov/translate-mcp/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/lopatnov/translate.git",
-    "directory": "clients/translate-mcp"
+    "url": "git+https://github.com/lopatnov/translate-mcp.git"
   },
   "license": "Apache-2.0",
   "author": "Oleksandr Lopatnov <lopatnov@gmail.com> (https://github.com/lopatnov)",
