@@ -63,22 +63,22 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  publish:
-    name: Publish packages
+  publish-npm:
+    name: Publish to npmjs.org
     needs: release
     runs-on: ubuntu-latest
     permissions:
-      contents: write
-      id-token: write    # required for npm provenance
-      packages: write    # required for GitHub Packages
+      contents: read
+      id-token: write   # required for provenance
 
     steps:
-      - name: Checkout tag
+      - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ needs.release.outputs.version }}
+          persist-credentials: false
 
-      - name: Set up Node.js for npmjs.org
+      - name: Set up Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '24.x'
@@ -88,16 +88,35 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Publish to npmjs.org
+      - name: Publish
         run: npm publish --provenance --access=public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Set up Node.js for GitHub Packages
+  publish-github:
+    name: Publish to GitHub Packages & create release
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # required for gh release create
+      packages: write   # required for GitHub Packages
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ needs.release.outputs.version }}
+          persist-credentials: false
+
+      - name: Set up Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '24.x'
           registry-url: 'https://npm.pkg.github.com'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
 
       - name: Publish to GitHub Packages
         run: npm publish --access=public
