@@ -29,7 +29,7 @@
     "directory": "clients/translate-mcp"
   },
   "license": "Apache-2.0",
-  "author": "Oleksandr Lopatnov <lopatniov@gmail.com> (https://github.com/lopatnov)",
+  "author": "Oleksandr Lopatnov <lopatnov@gmail.com> (https://github.com/lopatnov)",
   "type": "module",
   "main": "index.js",
   "bin": {
@@ -37,6 +37,7 @@
   },
   "files": [
     "index.js",
+    "protos/",
     "README.md",
     "LICENSE"
   ],

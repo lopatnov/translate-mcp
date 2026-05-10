@@ -4,8 +4,8 @@ Thanks for your interest in contributing to **@lopatnov/translate-mcp**! Contrib
 
 ## Ways to Contribute
 
-- Report bugs and suggest features via [Issues](https://github.com/lopatnov/translate/issues)
-- Fix bugs or implement new features via [Pull Requests](https://github.com/lopatnov/translate/pulls)
+- Report bugs and suggest features via [Issues](https://github.com/lopatnov/translate-mcp/issues)
+- Fix bugs or implement new features via [Pull Requests](https://github.com/lopatnov/translate-mcp/pulls)
 - Improve documentation
 - Add support for new AI clients
 
@@ -16,8 +16,8 @@ Thanks for your interest in contributing to **@lopatnov/translate-mcp**! Contrib
 2. **Clone** your fork:
 
    ```bash
-   git clone https://github.com/<YOUR-USERNAME>/translate.git
-   cd translate/clients/translate-mcp
+   git clone https://github.com/<YOUR-USERNAME>/translate-mcp.git
+   cd translate-mcp
    ```
 
 3. **Install dependencies:**
@@ -28,10 +28,7 @@ Thanks for your interest in contributing to **@lopatnov/translate-mcp**! Contrib
 
 4. **Start the Lopatnov.Translate gRPC service** (required for manual testing):
 
-   ```bash
-   cd ../..
-   docker compose -f docker/docker-compose.yml up
-   ```
+   Run the gRPC service as described in the [Lopatnov.Translate](https://github.com/lopatnov/translate) server documentation, then set `TRANSLATE_GRPC_URL` accordingly.
 
 5. **Create a branch** for your changes:
 
@@ -66,4 +63,4 @@ Please read our [Code of Conduct](CODE_OF_CONDUCT.md) before contributing.
 
 ## Questions?
 
-Feel free to open an [issue](https://github.com/lopatnov/translate/issues) for any questions.
+Feel free to open an [issue](https://github.com/lopatnov/translate-mcp/issues) for any questions.

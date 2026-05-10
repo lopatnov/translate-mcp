@@ -1,0 +1,74 @@
+syntax = "proto3";
+
+package lopatnov.translate.v1;
+
+service TranslateService {
+  rpc TranslateText (TranslateTextRequest) returns (TranslateTextResponse);
+  rpc DetectLanguage (DetectLanguageRequest) returns (DetectLanguageResponse);
+  rpc TranslateLocalization (TranslateLocalizationRequest) returns (TranslateLocalizationResponse);
+  rpc TranscribeAudio (TranscribeAudioRequest) returns (TranscribeAudioResponse);
+  rpc GetCapabilities (GetCapabilitiesRequest) returns (GetCapabilitiesResponse);
+}
+
+message TranslateTextRequest {
+  string text = 1;
+  string source_language = 2;
+  string target_language = 3;
+  string model = 4;
+  string language_format = 5;
+}
+
+message TranslateTextResponse {
+  string translated_text = 1;
+  string model_used = 2;
+  string detected_language = 3;
+}
+
+message DetectLanguageRequest {
+  string text = 1;
+  string language_format = 2;
+}
+
+message DetectLanguageResponse {
+  string language = 1;
+  float probability = 2;
+}
+
+message TranslateLocalizationRequest {
+  string json = 1;
+  string source_language = 2;
+  string target_language = 3;
+  string model = 4;
+  string existing_translation = 5;
+  string language_format = 6;
+}
+
+message TranslateLocalizationResponse {
+  int32 strings_translated = 1;
+  string json = 2;
+}
+
+message TranscribeAudioRequest {
+  bytes audio_data = 1;
+  string language = 2;
+  string language_format = 3;
+}
+
+message TranscribeSegment {
+  float start_time = 1;
+  float end_time = 2;
+  string text = 3;
+}
+
+message TranscribeAudioResponse {
+  string full_text = 1;
+  string detected_language = 2;
+  repeated TranscribeSegment segments = 3;
+}
+
+message GetCapabilitiesRequest {}
+
+message GetCapabilitiesResponse {
+  repeated string available_models = 1;
+  bool stt_available = 2;
+}
