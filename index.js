@@ -3,10 +3,11 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import grpc from "@grpc/grpc-js";
 import protoLoader from "@grpc/proto-loader";
-import { readFileSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join, resolve, sep } from "node:path";
-import { homedir } from "node:os";
+import { homedir, tmpdir } from "node:os";
+import { randomUUID } from "node:crypto";
 import { z } from "zod";
 
 // ---------------------------------------------------------------------------
@@ -19,6 +20,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const PROTO_PATH = join(__dirname, "protos/translate.proto");
 const GRPC_URL = process.env.TRANSLATE_GRPC_URL ?? "localhost:5100";
 const AUDIO_BASE_DIR = resolve(process.env.TRANSCRIBE_BASE_DIR ?? homedir());
+const SYNTH_OUTPUT_DIR = resolve(process.env.SYNTHESIZE_OUTPUT_DIR ?? join(tmpdir(), "translate-mcp"));
 
 let _client = null;
 
@@ -64,7 +66,7 @@ function toolError(err) {
 // ---------------------------------------------------------------------------
 
 const server = new McpServer(
-  { name: "lopatnov-translate", version: "2.0.0" },
+  { name: "lopatnov-translate", version: "3.0.0" },
 );
 
 const langFormat = z.enum(["bcp47", "flores200", "native"]);
@@ -76,6 +78,7 @@ server.registerTool("translate_text", {
     source_language: z.string().optional().describe("Source language code (BCP-47 e.g. 'uk', 'ru') or 'auto' for auto-detection"),
     target_language: z.string().describe("Target language code (BCP-47 e.g. 'en', 'de')"),
     model:           z.string().optional().describe("Model key (e.g. 'm2m100_418M'). Omit to use the default model."),
+    context:         z.string().optional().describe("Optional free-form context hint for the translation (used by LLM-based models)."),
     language_format: langFormat.optional().describe("Format for language codes. Default: bcp47"),
   },
 }, async (args) => {
@@ -85,6 +88,7 @@ server.registerTool("translate_text", {
       source_language: args.source_language ?? "auto",
       target_language: args.target_language,
       model:           args.model ?? "",
+      context:         args.context ?? "",
       language_format: args.language_format ?? "bcp47",
     });
     const parts = [`**Translation:** ${res.translated_text}`, `**Model used:** ${res.model_used}`];
@@ -122,6 +126,7 @@ server.registerTool("translate_localization", {
     target_language:      z.string().describe("Target language code (BCP-47)"),
     model:                z.string().optional().describe("Model key. Omit to use the default model."),
     existing_translation: z.string().optional().describe("JSON with already-translated values (same structure). Matching keys will be reused."),
+    context:              z.string().optional().describe("Optional JSON with context hints per key (used by LLM-based models)."),
     language_format:      langFormat.optional(),
   },
 }, async (args) => {
@@ -132,6 +137,7 @@ server.registerTool("translate_localization", {
       target_language:      args.target_language,
       model:                args.model ?? "",
       existing_translation: args.existing_translation ?? "",
+      context:              args.context ?? "",
       language_format:      args.language_format ?? "bcp47",
     });
     return { content: [{ type: "text", text: `**Strings translated:** ${res.strings_translated}\n\`\`\`json\n${res.json}\n\`\`\`` }] };
@@ -160,6 +166,7 @@ server.registerTool("transcribe_audio", {
     const res = await call("TranscribeAudio", {
       audio_data:      audioBytes,
       language:        args.language ?? "auto",
+      audio_format:    "",
       language_format: args.language_format ?? "bcp47",
     });
     const segments = (res.segments ?? [])
@@ -174,14 +181,57 @@ server.registerTool("transcribe_audio", {
   }
 });
 
+server.registerTool("synthesize_speech", {
+  description: "Convert text to speech using the configured Piper TTS voice and save the result as a WAV file.",
+  inputSchema: {
+    text:            z.string().describe("Text to synthesize"),
+    language:        z.string().optional().describe("BCP-47 language code (e.g. 'en', 'ru', 'uk'). Must match a configured Piper voice."),
+    voice:           z.string().optional().describe("Speaker name for multi-speaker voices (e.g. 'lada', 'mykyta', 'tetiana'). Omit for default speaker."),
+    speed:           z.number().min(0.5).max(2.0).optional().describe("Speech speed multiplier (0.5 = slow, 1.0 = normal, 2.0 = fast). Default: 1.0"),
+    language_format: langFormat.optional().describe("Format for the language code. Default: bcp47"),
+  },
+}, async (args) => {
+  try {
+    const res = await call("SynthesizeSpeech", {
+      text:            args.text,
+      language:        args.language ?? "",
+      voice:           args.voice ?? "",
+      speed:           args.speed ?? 1.0,
+      language_format: args.language_format ?? "bcp47",
+    });
+
+    mkdirSync(SYNTH_OUTPUT_DIR, { recursive: true });
+    const outputPath = join(SYNTH_OUTPUT_DIR, `tts-${randomUUID()}.wav`);
+    writeFileSync(outputPath, Buffer.from(res.audio_data));
+
+    const parts = [
+      `**Audio saved:** ${outputPath}`,
+      `**Sample rate:** ${res.sample_rate} Hz`,
+    ];
+    if (args.language) parts.push(`**Language:** ${args.language}`);
+    if (args.voice)    parts.push(`**Voice:** ${args.voice}`);
+    return { content: [{ type: "text", text: parts.join("\n") }] };
+  } catch (err) {
+    return toolError(err);
+  }
+});
+
 server.registerTool("get_capabilities", {
   description: "Get the list of available translation models and service capabilities.",
 }, async () => {
   try {
     const res = await call("GetCapabilities", {});
     const models = (res.available_models ?? []).join(", ") || "(none)";
+    const voices = (res.available_voices ?? []).join(", ") || "(none)";
     const stt = res.stt_available ? "✅ enabled" : "❌ disabled";
-    return { content: [{ type: "text", text: `**Available models:** ${models}\n**Speech-to-text:** ${stt}` }] };
+    const tts = res.tts_available ? "✅ enabled" : "❌ disabled";
+    const parts = [
+      `**Available models:** ${models}`,
+      `**Speech-to-text:** ${stt}`,
+      `**Text-to-speech:** ${tts}`,
+    ];
+    if (res.tts_available) parts.push(`**Available voices:** ${voices}`);
+    return { content: [{ type: "text", text: parts.join("\n") }] };
   } catch (err) {
     return toolError(err);
   }
