@@ -216,6 +216,52 @@ server.registerTool("synthesize_speech", {
   }
 });
 
+server.registerTool("translate_audio", {
+  description:
+    "Translate speech from a WAV file end-to-end: transcribe (Whisper) → translate (NLLB/M2M) → synthesize (Piper). Returns the transcription, translated text, and a path to the output WAV file.",
+  inputSchema: {
+    file_path:       z.string().describe("Absolute path to the source WAV file"),
+    source_language: z.string().optional().describe("Source language (BCP-47 e.g. 'en'). Omit or use 'auto' for Whisper auto-detection."),
+    target_language: z.string().describe("Target language (BCP-47 e.g. 'uk', 'ru')"),
+    target_voice:    z.string().optional().describe("Speaker name for multi-speaker Piper voices (e.g. 'lada'). Omit for default."),
+    language_format: langFormat.optional(),
+  },
+}, async (args) => {
+  try {
+    const resolvedPath = resolve(args.file_path);
+    if (!resolvedPath.startsWith(AUDIO_BASE_DIR + sep)) {
+      return { content: [{ type: "text", text: `❌ File must be inside ${AUDIO_BASE_DIR}` }], isError: true };
+    }
+    if (!resolvedPath.toLowerCase().endsWith(".wav")) {
+      return { content: [{ type: "text", text: "❌ Only .wav files are supported" }], isError: true };
+    }
+
+    const audioBytes = readFileSync(resolvedPath);
+    const res = await call("TranslateAudio", {
+      audio_data:      audioBytes,
+      source_language: args.source_language ?? "auto",
+      target_language: args.target_language,
+      audio_format:    "",
+      target_voice:    args.target_voice ?? "",
+      language_format: args.language_format ?? "bcp47",
+    });
+
+    mkdirSync(SYNTH_OUTPUT_DIR, { recursive: true });
+    const outputPath = join(SYNTH_OUTPUT_DIR, `translated-${randomUUID()}.wav`);
+    writeFileSync(outputPath, Buffer.from(res.translated_audio));
+
+    const parts = [
+      `**Transcription:** ${res.transcription}`,
+      `**Translated text:** ${res.translated_text}`,
+      `**Output audio:** ${outputPath}`,
+      `**Sample rate:** ${res.sample_rate} Hz`,
+    ];
+    return { content: [{ type: "text", text: parts.join("\n") }] };
+  } catch (err) {
+    return toolError(err);
+  }
+});
+
 server.registerTool("get_capabilities", {
   description: "Get the list of available translation models and service capabilities.",
 }, async () => {
