@@ -50,6 +50,22 @@ function call(method, request) {
   );
 }
 
+/**
+ * Validates that `filePath` is inside AUDIO_BASE_DIR and ends in `.wav`,
+ * then reads and returns its bytes.
+ * Returns `{ bytes: Buffer }` on success or `{ errorResult: <tool error> }` on failure.
+ */
+function readAudioFile(filePath) {
+  const resolvedPath = resolve(filePath);
+  if (!resolvedPath.startsWith(AUDIO_BASE_DIR + sep)) {
+    return { errorResult: { content: [{ type: "text", text: `❌ File must be inside ${AUDIO_BASE_DIR}` }], isError: true } };
+  }
+  if (!resolvedPath.toLowerCase().endsWith(".wav")) {
+    return { errorResult: { content: [{ type: "text", text: "❌ Only .wav files are supported" }], isError: true } };
+  }
+  return { bytes: readFileSync(resolvedPath) };
+}
+
 /** Convert gRPC error to human-readable string */
 function grpcError(err) {
   const codes = { 2:"UNKNOWN",3:"INVALID_ARGUMENT",5:"NOT_FOUND",7:"PERMISSION_DENIED",
@@ -157,14 +173,8 @@ server.registerTool("transcribe_audio", {
   },
 }, async (args) => {
   try {
-    const resolvedPath = resolve(args.file_path);
-    if (!resolvedPath.startsWith(AUDIO_BASE_DIR + sep)) {
-      return { content: [{ type: "text", text: `❌ File must be inside ${AUDIO_BASE_DIR}` }], isError: true };
-    }
-    if (!resolvedPath.toLowerCase().endsWith(".wav")) {
-      return { content: [{ type: "text", text: "❌ Only .wav files are supported" }], isError: true };
-    }
-    const audioBytes = readFileSync(resolvedPath);
+    const { bytes: audioBytes, errorResult } = readAudioFile(args.file_path);
+    if (errorResult) return errorResult;
     const res = await call("TranscribeAudio", {
       audio_data:      audioBytes,
       language:        args.language ?? "auto",
@@ -230,15 +240,8 @@ server.registerTool("translate_audio", {
   },
 }, async (args) => {
   try {
-    const resolvedPath = resolve(args.file_path);
-    if (!resolvedPath.startsWith(AUDIO_BASE_DIR + sep)) {
-      return { content: [{ type: "text", text: `❌ File must be inside ${AUDIO_BASE_DIR}` }], isError: true };
-    }
-    if (!resolvedPath.toLowerCase().endsWith(".wav")) {
-      return { content: [{ type: "text", text: "❌ Only .wav files are supported" }], isError: true };
-    }
-
-    const audioBytes = readFileSync(resolvedPath);
+    const { bytes: audioBytes, errorResult } = readAudioFile(args.file_path);
+    if (errorResult) return errorResult;
     const res = await call("TranslateAudio", {
       audio_data:      audioBytes,
       source_language: args.source_language ?? "auto",
