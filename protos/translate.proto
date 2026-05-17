@@ -2,11 +2,15 @@ syntax = "proto3";
 
 package lopatnov.translate.v1;
 
+option csharp_namespace = "Lopatnov.Translate.Grpc";
+
 service TranslateService {
   rpc TranslateText (TranslateTextRequest) returns (TranslateTextResponse);
-  rpc DetectLanguage (DetectLanguageRequest) returns (DetectLanguageResponse);
   rpc TranslateLocalization (TranslateLocalizationRequest) returns (TranslateLocalizationResponse);
+  rpc DetectLanguage (DetectLanguageRequest) returns (DetectLanguageResponse);
   rpc TranscribeAudio (TranscribeAudioRequest) returns (TranscribeAudioResponse);
+  rpc SynthesizeSpeech (SynthesizeSpeechRequest) returns (SynthesizeSpeechResponse);
+  rpc TranslateAudio (TranslateAudioRequest) returns (TranslateAudioResponse);
   rpc GetCapabilities (GetCapabilitiesRequest) returns (GetCapabilitiesResponse);
 }
 
@@ -14,61 +18,97 @@ message TranslateTextRequest {
   string text = 1;
   string source_language = 2;
   string target_language = 3;
-  string model = 4;
-  string language_format = 5;
+  string model = 4;           // name of the model entry from config (e.g. "nllb"); empty = default model
+  string context = 5;         // optional: free-form hint for the translation (reserved for LLM-based models)
+  string language_format = 6; // format for source_language/target_language/detected_language: "bcp47" (default), "flores200", "native"
 }
 
 message TranslateTextResponse {
   string translated_text = 1;
-  string model_used = 2;
-  string detected_language = 3;
+  string detected_language = 2;
+  string model_used = 3;
 }
 
 message DetectLanguageRequest {
   string text = 1;
-  string language_format = 2;
+  string language_format = 2; // format for the returned language code: "bcp47" (default), "flores200", "native"
 }
 
 message DetectLanguageResponse {
   string language = 1;
-  float probability = 2;
+  float probability = 2; // Confidence score in [0, 1]. Returns 0.0 when the detector does not provide a score (e.g. heuristic detector).
 }
 
 message TranslateLocalizationRequest {
   string json = 1;
   string source_language = 2;
   string target_language = 3;
-  string model = 4;
-  string existing_translation = 5;
-  string language_format = 6;
+  string model = 4;                 // name of the model entry from config; empty = default model
+  string existing_translation = 5;  // optional: same-structure JSON with already-translated values; matching keys are reused as-is
+  string context = 6;               // optional: same-structure JSON with context hints per key (used by LLM-based models)
+  string language_format = 7;       // format for source_language/target_language: "bcp47" (default), "flores200", "native"
 }
 
 message TranslateLocalizationResponse {
-  int32 strings_translated = 1;
-  string json = 2;
+  string json = 1;
+  int32 strings_translated = 2;
 }
 
 message TranscribeAudioRequest {
   bytes audio_data = 1;
   string language = 2;
-  string language_format = 3;
-}
-
-message TranscribeSegment {
-  float start_time = 1;
-  float end_time = 2;
-  string text = 3;
+  string audio_format = 3;
+  string language_format = 4; // format for language/detected_language: "bcp47" (default), "flores200", "native"
 }
 
 message TranscribeAudioResponse {
-  string full_text = 1;
+  repeated TranscriptionSegment segments = 1;
   string detected_language = 2;
-  repeated TranscribeSegment segments = 3;
+  string full_text = 3;
+}
+
+message TranscriptionSegment {
+  string text = 1;
+  float start_time = 2;
+  float end_time = 3;
+}
+
+message SynthesizeSpeechRequest {
+  string text = 1;
+  string language = 2;
+  string voice = 3;
+  float speed = 4;
+  string language_format = 5; // format for language: "bcp47" (default), "flores200", "native"
+}
+
+message SynthesizeSpeechResponse {
+  bytes audio_data = 1;
+  int32 sample_rate = 2;
+}
+
+message TranslateAudioRequest {
+  bytes audio_data = 1;
+  string source_language = 2;
+  string target_language = 3;
+  string audio_format = 4;
+  string target_voice = 5;
+  string language_format = 6; // format for source_language/target_language: "bcp47" (default), "flores200", "native"
+}
+
+message TranslateAudioResponse {
+  bytes translated_audio = 1;
+  string transcription = 2;
+  string translated_text = 3;
+  int32 sample_rate = 4;
 }
 
 message GetCapabilitiesRequest {}
 
 message GetCapabilitiesResponse {
-  repeated string available_models = 1;
-  bool stt_available = 2;
+  reserved 1;
+  reserved "supported_languages";
+  repeated string available_voices = 2;
+  repeated string available_models = 3;
+  bool stt_available = 4;
+  bool tts_available = 5;
 }
