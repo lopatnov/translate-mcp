@@ -45,7 +45,7 @@
   ],
   "scripts": {
     "start": "node index.js",
-    "sync-proto": "node -e \"const{copyFileSync}=require('fs');copyFileSync('../../src/Lopatnov.Translate.Grpc/Protos/translate.proto','protos/translate.proto');console.log('proto synced')\""
+    "sync-proto": "node -e \"const{copyFileSync}=require('fs');const src=process.env.PROTO_SRC||'../../src/Lopatnov.Translate.Grpc/Protos/translate.proto';copyFileSync(src,'protos/translate.proto');console.log('proto synced from '+src)\""
   },
   "engines": {
     "node": ">=20.0.0"

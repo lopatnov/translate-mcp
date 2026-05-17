@@ -21,6 +21,8 @@ const PROTO_PATH = join(__dirname, "protos/translate.proto");
 const GRPC_URL = process.env.TRANSLATE_GRPC_URL ?? "localhost:5100";
 const AUDIO_BASE_DIR = resolve(process.env.TRANSCRIBE_BASE_DIR ?? homedir());
 const SYNTH_OUTPUT_DIR = resolve(process.env.SYNTHESIZE_OUTPUT_DIR ?? join(tmpdir(), "translate-mcp"));
+// Create the output directory once at startup rather than on every tool call.
+mkdirSync(SYNTH_OUTPUT_DIR, { recursive: true });
 
 let _client = null;
 
@@ -200,9 +202,9 @@ server.registerTool("synthesize_speech", {
       language_format: args.language_format ?? "bcp47",
     });
 
-    mkdirSync(SYNTH_OUTPUT_DIR, { recursive: true });
     const outputPath = join(SYNTH_OUTPUT_DIR, `tts-${randomUUID()}.wav`);
-    writeFileSync(outputPath, Buffer.from(res.audio_data));
+    // res.audio_data is already a Buffer from the gRPC client — no copy needed.
+    writeFileSync(outputPath, res.audio_data);
 
     const parts = [
       `**Audio saved:** ${outputPath}`,
@@ -246,9 +248,9 @@ server.registerTool("translate_audio", {
       language_format: args.language_format ?? "bcp47",
     });
 
-    mkdirSync(SYNTH_OUTPUT_DIR, { recursive: true });
     const outputPath = join(SYNTH_OUTPUT_DIR, `translated-${randomUUID()}.wav`);
-    writeFileSync(outputPath, Buffer.from(res.translated_audio));
+    // res.translated_audio is already a Buffer — no copy needed.
+    writeFileSync(outputPath, res.translated_audio);
 
     const parts = [
       `**Transcription:** ${res.transcription}`,
