@@ -199,7 +199,7 @@ server.registerTool("synthesize_speech", {
     text:            z.string().describe("Text to synthesize"),
     language:        z.string().optional().describe("BCP-47 language code (e.g. 'en', 'ru', 'uk'). Must match a configured Piper voice."),
     voice:           z.string().optional().describe("Speaker name for multi-speaker voices (e.g. 'lada', 'mykyta', 'tetiana'). Omit for default speaker."),
-    speed:           z.number().min(0.5).max(2.0).optional().describe("Speech speed multiplier (0.5 = slow, 1.0 = normal, 2.0 = fast). Default: 1.0"),
+    speed:           z.number().min(0.5).max(2).optional().describe("Speech speed multiplier (0.5 = slow, 1.0 = normal, 2.0 = fast). Default: 1.0"),
     language_format: langFormat.optional().describe("Format for the language code. Default: bcp47"),
   },
 }, async (args) => {
