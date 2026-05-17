@@ -198,7 +198,7 @@ server.registerTool("synthesize_speech", {
       text:            args.text,
       language:        args.language ?? "",
       voice:           args.voice ?? "",
-      speed:           args.speed ?? 1.0,
+      speed:           args.speed ?? 1,
       language_format: args.language_format ?? "bcp47",
     });
 
