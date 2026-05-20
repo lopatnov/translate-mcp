@@ -1,16 +1,18 @@
 {
   "name": "@lopatnov/translate-mcp",
-  "version": "2.0.0",
-  "description": "MCP server for Lopatnov.Translate — exposes speech-to-text, text translation, and language detection as AI tools over gRPC",
+  "version": "3.0.0",
+  "description": "MCP server for Lopatnov.Translate — exposes TTS, STT, text translation, and language detection as AI tools over gRPC",
   "keywords": [
     "mcp",
     "model-context-protocol",
     "translate",
     "translation",
     "speech-to-text",
+    "text-to-speech",
     "transcription",
     "language-detection",
     "whisper",
+    "piper",
     "nllb",
     "m2m100",
     "grpc",
@@ -19,7 +21,7 @@
     "self-hosted",
     "offline"
   ],
-  "homepage": "https://github.com/lopatnov/translate-mcp#readme",
+  "homepage": "https://lopatnov.github.io/translate-mcp/",
   "bugs": {
     "url": "https://github.com/lopatnov/translate-mcp/issues"
   },
@@ -38,10 +40,12 @@
     "index.js",
     "protos/",
     "README.md",
+    "CHANGELOG.md",
     "LICENSE"
   ],
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "sync-proto": "node -e \"const{copyFileSync}=require('fs');const src=process.env.PROTO_SRC||'../../src/Lopatnov.Translate.Grpc/Protos/translate.proto';copyFileSync(src,'protos/translate.proto');console.log('proto synced from '+src)\""
   },
   "engines": {
     "node": ">=20.0.0"
