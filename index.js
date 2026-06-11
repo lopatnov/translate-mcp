@@ -87,7 +87,7 @@ const server = new McpServer(
   { name: "lopatnov-translate", version: "3.0.0" },
 );
 
-const langFormat = z.enum(["bcp47", "flores200", "native"]);
+const langFormat = z.enum(["bcp47", "native"]);
 
 server.registerTool("translate_text", {
   description: "Translate text from one language to another using the configured translation model.",

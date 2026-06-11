@@ -192,7 +192,7 @@ Add to Zed `settings.json` (**Zed → Settings → Open Settings**):
 | `target_language` | string | ✅ | Target language code, e.g. `"uk"`, `"de"` |
 | `source_language` | string | — | Source language, or `"auto"` for auto-detection (default) |
 | `model` | string | — | Model name from config, e.g. `"m2m100_418M"`. Omit for default |
-| `language_format` | string | — | `"bcp47"` (default), `"flores200"`, or `"native"` |
+| `language_format` | string | — | `"bcp47"` (default) or `"native"` (model-specific codes) |
 
 ### `detect_language`
 
