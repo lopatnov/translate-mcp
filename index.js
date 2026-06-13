@@ -235,6 +235,7 @@ server.registerTool("translate_audio", {
     file_path:       z.string().describe("Absolute path to the source WAV file"),
     source_language: z.string().optional().describe("Source language (BCP-47 e.g. 'en'). Omit or use 'auto' for Whisper auto-detection."),
     target_language: z.string().describe("Target language (BCP-47 e.g. 'uk', 'ru')"),
+    model:           z.string().optional().describe("Model key (e.g. 'm2m100_418M'). Omit to use the default model."),
     target_voice:    z.string().optional().describe("Speaker name for multi-speaker Piper voices (e.g. 'lada'). Omit for default."),
     language_format: langFormat.optional(),
   },
@@ -247,6 +248,7 @@ server.registerTool("translate_audio", {
       source_language: args.source_language ?? "auto",
       target_language: args.target_language,
       audio_format:    "",
+      model:           args.model ?? "",
       target_voice:    args.target_voice ?? "",
       language_format: args.language_format ?? "bcp47",
     });
